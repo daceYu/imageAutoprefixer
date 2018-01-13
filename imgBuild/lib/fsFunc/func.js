@@ -96,13 +96,13 @@ let writeImg = (folderPath, fileName) => {
 		let _minW = 0.2 * size.width,
 			_minfilename = fileName.replace("_2x", "_min"),
 			_minpath = `${folderPath}${_minfilename}`;
-		this.resize(_minW).colors(8).blur(7,3).toBuffer("jpg", (err, buffer) => {
+		this.resize(_minW).colors(8).blur(7,3).toBuffer("jpg", function (err, buffer) {
 			if (err) {
 				console.log(colors.get("FgRed"), err);
 				return false;
 			}
 
-			let base = _minfilename + ':"data:image/png;base64,' + buffer.toString("base64") + '"';
+			let base = '"images/' + _minfilename + '":"data:image/png;base64,' + buffer.toString("base64") + '"';
 			baseArr.push(base);
 			if (baseArr.length == imgArr.length) {
 				let _obj = `var baseObj = { ${baseArr.join(",\r\n")} }`;
@@ -113,13 +113,14 @@ let writeImg = (folderPath, fileName) => {
 						return false;
 					}
 					console.log(colors.get("BgCyan"), "生成base64.json文件")
-					
-					// finally , replace
-					for (let i = 0; i < htmlArr.length; i++) {
-						let path = folderPath.replace("images/", htmlArr[i]);
-						renderBase64(path, baseObj);
-					}
 				})
+
+				// finally , replace
+				eval(_obj);
+				for (let i = 0; i < htmlArr.length; i++) {
+					let path = folderPath.replace("images/", htmlArr[i]);
+					renderBase64(path, baseObj);
+				}
 			}
 		})
 	})
@@ -127,10 +128,30 @@ let writeImg = (folderPath, fileName) => {
 
 /**
  * img replace to base64
- * if exist html file, 
+ * if exist html file, Replace the pictures of _min in the IMG label in the HTML file into Base64
+ * param {String} path: file path
+ * param {String}
  */
-let renderBase64 = () => {
+let renderBase64 = (path, baseObj) => {
+	fs.readFile(path, {
+		encoding: "utf-8"
+	}, (err, data) => {
+		if (err) {
+			console.log(colors.get("FgRed"), err)
+			return false;
+		}
 
+		let str = data.replace(/src=[\'\"]?([^\'\"]*)[\'\"]?/gi, (data, match) => {
+			return match.indexOf("_min.png") > -1 ? `src="${baseObj[match]}"` : `src="${match}"`
+		});
+		fs.writeFile(path, str, (err) => {
+			if (err) {
+				console.log(colors.get("FgRed"), err)
+				return false;
+			}
+			console.log(colors.get("FgCyan"), `${path} 已替换图片`);
+		})
+	})
 }
 
 
