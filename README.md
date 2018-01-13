@@ -5,7 +5,7 @@ Images are processed automatically, such as 1X, 2x, webp, Base64, etc. based on 
 
 ## Version
 
-___v1.0___  
+___v1.1___
 
 ## Support
 
